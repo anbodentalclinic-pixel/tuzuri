@@ -146,6 +146,7 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
     <h2 class="sec">教科書の全単語（Program 4〜7）</h2>
     <p class="secNote">New Words をすべて出題。1回10問をランダムに出します。</p>
     <div class="stages" id="tbList"></div>
+    <p class="modeNote" id="syncNote"></p>
   </section>
 
 
@@ -239,6 +240,27 @@ const KEY='tsuzuri-hatsuon-v1';
 let save={};
 try{ save=JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){ save={}; }
 function store(){ try{ localStorage.setItem(KEY,JSON.stringify(save)); }catch(e){} }
+
+/* ===== まちがい記録（Googleスプレッドシート）との同期 ===== */
+const SYNC={url:'https://script.google.com/macros/s/AKfycbz-3seMZTiFcJRscHxa_l1DoeDtET405w5_YxsgjsRPx1coF2oPQlFWbZgOgpXz88vZsA/exec',key:'dxyqERe2VfS4JL_4',app:'つづりと発音'};
+function syncAdd(r){
+  save.outbox=save.outbox||[];
+  save.outbox.push(Object.assign({time:new Date().toISOString(),app:SYNC.app},r));
+  store();
+  clearTimeout(syncAdd.t); syncAdd.t=setTimeout(syncFlush,2000);
+}
+function syncFlush(){
+  const box=(save.outbox||[]).slice(0,150);
+  if(!box.length || !navigator.onLine) return;
+  const body=JSON.stringify({key:SYNC.key,records:box});
+  let sent=false;
+  try{ if(navigator.sendBeacon) sent=navigator.sendBeacon(SYNC.url,new Blob([body],{type:'text/plain;charset=utf-8'})); }catch(e){}
+  if(!sent){ try{ fetch(SYNC.url,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body}); sent=true; }catch(e){} }
+  if(sent){ save.outbox=(save.outbox||[]).slice(box.length); store(); if(save.outbox.length) setTimeout(syncFlush,1500); }
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') syncFlush(); });
+window.addEventListener('online',syncFlush);
+
 
 // ===== 音声 =====
 let voice=null;
@@ -394,6 +416,7 @@ function renderHome(){
     else b.onclick=()=>startTrolley(st);
     tl.appendChild(b);
   });
+  const sn=$('syncNote'); if(sn) sn.textContent='版 10/29-sync　まちがい記録：'+(save.pulled?'スプレッドシートと同期ずみ':'まだ読み込んでいません')+((save.outbox||[]).length?'（送信待ち '+save.outbox.length+'件）':'');
   show('home');
 }
 
@@ -798,6 +821,7 @@ function tFinish(clear){
   const doneWords=TG.words.slice(0,clear?TG.words.length:TG.idx+1);
   save.weak=save.weak||{};
   doneWords.forEach(x=>{
+    syncAdd({kind:'単語',item:x.w,result:TG.missed.has(x.w)?'×':'○',correct:x.w,input:TG.missed.has(x.w)?(WRONG[x.w]||''):'',program:st.tb&&/^p\d/.test(st.id)?st.id.toUpperCase():(x.st&&x.st.tile&&/^P\d/.test(x.st.tile)?x.st.tile:'')});
     if(TG.missed.has(x.w)) save.weak[x.w]=(save.weak[x.w]||0)+1;
     else if(save.weak[x.w]){ save.weak[x.w]--; if(save.weak[x.w]<=0) delete save.weak[x.w]; }
   });
@@ -818,6 +842,26 @@ $('tQuit').onclick=quit;
 $('tListen').onclick=()=>{ if(TG) speak(TG.x.w); focusKb(); };
 $('tSnd').onclick=()=>{ save.mute=!save.mute; store(); sndLabel(); focusKb(); };
 
+// これまでの記録を1回だけ送る → スプレッドシートの苦手を読み込む
+function syncPull(){
+  fetch(SYNC.url+'?key='+encodeURIComponent(SYNC.key)).then(r=>r.json()).then(d=>{
+    if(!d||!d.ok||!Array.isArray(d.weak)) return;
+    const vocab=new Map();
+    TEXTBOOK.forEach(p=>p.words.forEach(w=>vocab.set(w[0].toLowerCase(),w[0])));
+    STAGES.forEach(st=>st.words.forEach(w=>vocab.set(w[0].toLowerCase(),w[0])));
+    save.weak=save.weak||{};
+    d.weak.forEach(x=>{ if(x.kind!=='単語') return; const w=vocab.get(String(x.item).toLowerCase()); if(w&&WRONG[w]) save.weak[w]=Math.max(save.weak[w]||0,+x.weak||0); });
+    save.pulled=new Date().toISOString(); store();
+    if(!$('home').classList.contains('hidden')) renderHome();
+  }).catch(()=>{});
+}
+(function syncStart(){
+  if(!save.migrated){
+    Object.keys(save.weak||{}).forEach(w=>{ for(let i=0;i<(save.weak[w]||0);i++) syncAdd({kind:'単語',item:w,result:'×',correct:w,input:WRONG[w]||'',program:''}); });
+    save.migrated=true; store(); syncFlush();
+    setTimeout(syncPull,2500);
+  } else { syncFlush(); syncPull(); }
+})();
 renderHome();
 </script>
 </body>
