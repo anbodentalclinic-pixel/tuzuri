@@ -36,7 +36,7 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .stages{display:grid;gap:12px}
 .trialBtn{background:none;border:none;color:var(--sub);text-decoration:underline;font:inherit;font-size:.85rem;cursor:pointer;padding:4px 0}.trialBtn.on{color:#B91C1C;font-weight:700;text-decoration:none;background:#FDE2E2;border-radius:8px;padding:4px 10px}
 .glist{display:grid;gap:4px;margin-top:6px}.grow{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--sub)}.gname{min-width:11em}.grail{display:inline-flex;gap:3px}.grail i.br{display:inline-block;width:18px;height:8px;border-radius:2px;background:repeating-linear-gradient(90deg,#B91C1C 0 6px,transparent 6px 9px);border:1px solid #7f1d1d}
-.gsent{font-size:1.25rem;margin-top:.35rem;letter-spacing:.01em}.gsent u{text-decoration:none;border-bottom:3px solid currentColor;display:inline-block;min-width:3em}
+.gsent{font-size:1rem;margin-top:.2rem;letter-spacing:.01em}.gsent u{text-decoration:none;border-bottom:3px solid currentColor;display:inline-block;min-width:3em}
 .stage{display:grid;grid-template-columns:72px 1fr auto;align-items:center;gap:14px;text-align:left;
   background:var(--key);border:2px solid var(--edge);border-bottom-width:6px;border-radius:14px;padding:12px 16px}
 .stage:hover{transform:translateY(-1px)}
@@ -119,15 +119,16 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .tPanel .back,.tPanel .snd,.tPanel .listen{color:#5A6680;border-color:#B7C2D4}
 .tTop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .lives{margin-left:auto;font-size:1.3rem;letter-spacing:2px}
-.tQ{text-align:center;margin-top:8px;width:fit-content;padding:8px 22px}
-.tJa{font-size:1.7rem;font-weight:800}
+.tQ{text-align:left;margin:8px 0 0 0;width:fit-content;max-width:min(46vw,520px);padding:6px 12px;display:flex;align-items:center;gap:10px}
+.tJa{font-size:1.1rem;font-weight:800;line-height:1.35}
+.tQ .listen{margin:0;padding:4px 10px;font-size:.85rem;flex:none}
 .tBottom{max-width:680px;width:100%;margin:0 auto;text-align:center}
 .tCands{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
-.cand{font-size:1.7rem;font-weight:600;padding:4px 18px;border-radius:12px;background:rgba(255,255,255,.92);color:#1E2940;border:3px solid transparent}
+.cand{font-size:1.3rem;font-weight:600;padding:4px 18px;border-radius:12px;background:rgba(255,255,255,.92);color:#1E2940;border:3px solid transparent}
 .cand b{color:var(--c)}
 .cand.pick{border-color:var(--c)}
 .cand.out{opacity:.35}
-.tTyped{font-size:2.3rem;font-weight:700;min-height:1.5em;background:rgba(30,41,64,.85);color:#fff;border-radius:12px;padding:2px 18px;display:inline-block;min-width:7ch}
+.tTyped{font-size:1.8rem;font-weight:700;min-height:1.5em;background:rgba(30,41,64,.85);color:#fff;border-radius:12px;padding:2px 18px;display:inline-block;min-width:7ch}
 .tMsg{min-height:1.9em;font-weight:800;font-size:1.15rem;margin-bottom:8px}
 .tMsg:not(:empty){background:rgba(255,255,255,.92);color:#1E2940;border-radius:12px;padding:6px 14px;display:inline-block}
 .tMsg.ng{color:#C0392B}
@@ -189,7 +190,7 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
       </div>
       <div class="tQ tPanel">
         <div class="tJa" id="tJa"></div>
-        <button class="listen" id="tListen">🔊 もう一度聞く（スペースキー）</button>
+        <button class="listen" id="tListen" title="もう一度聞く（スペースキー）">🔊 聞く</button>
       </div>
     </div>
     <div class="tBottom">
@@ -551,7 +552,7 @@ function renderHome(){
     gl.appendChild(bt);
   }
   const tb=$('trialBtn'); if(tb){ tb.textContent=trialLabel(); tb.classList.toggle('on',trialOn()); if(!tb.dataset.bound){ tb.dataset.bound=1; bindTrial(tb,renderHome); } }
-  const sn=$('syncNote'); if(sn) sn.textContent='版 10/29-trial　まちがい記録：'+(save.pulled?'スプレッドシートと同期ずみ':'まだ読み込んでいません')+((save.outbox||[]).length?'（送信待ち '+save.outbox.length+'件）':'');
+  const sn=$('syncNote'); if(sn) sn.textContent='版 10/31-view　まちがい記録：'+(save.pulled?'スプレッドシートと同期ずみ':'まだ読み込んでいません')+((save.outbox||[]).length?'（送信待ち '+save.outbox.length+'件）':'');
   show('home');
 }
 
@@ -1272,8 +1273,8 @@ function tLoop(now){
   const k=1-Math.pow(0.02,dt);
   if(TG&&(TG.phase==='approach'||TG.phase==='run')){
     const fx=Math.sin(tr.rotation.y), fz=Math.cos(tr.rotation.y);
-    T3.camera.position.lerp(new THREE.Vector3(tr.position.x-fx*9+3,8.5,tr.position.z-fz*9),k);
-    T3.look.lerp(new THREE.Vector3(tr.position.x+fx*14,0,tr.position.z+fz*14),k);
+    T3.camera.position.lerp(new THREE.Vector3(tr.position.x-fx*10+3,10.5,tr.position.z-fz*10),k);
+    T3.look.lerp(new THREE.Vector3(tr.position.x+fx*19,0,tr.position.z+fz*19),k);
   }else{
     T3.look.lerp(tr.position,k);
   }
@@ -1328,7 +1329,7 @@ function syncPull(){
   }).catch(()=>{});
 }
 (function syncStart(){
-  if(!save.migrated){
+  if(!save.migrated && !trialOn()){ // おためし中は吸い上げを待つ（記録が消えないように）
     Object.keys(save.weak||{}).forEach(w=>{ for(let i=0;i<(save.weak[w]||0);i++) syncAdd({kind:'単語',item:w,result:'×',correct:w,input:WRONG[w]||'',program:''}); });
     save.migrated=true; store(); syncFlush();
     setTimeout(syncPull,2500);
